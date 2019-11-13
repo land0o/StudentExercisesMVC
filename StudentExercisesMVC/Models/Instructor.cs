@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace StudentExercises
+namespace StudentExercises.Models
 {
     public class Instructor
     {

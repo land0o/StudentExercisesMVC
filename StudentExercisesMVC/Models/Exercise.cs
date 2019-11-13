@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Text;
 
 
-namespace StudentExercises
+namespace StudentExercises.Models
 {
     public class Exercise
     {
