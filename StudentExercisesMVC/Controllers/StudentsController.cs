@@ -36,26 +36,29 @@ namespace StudentExercisesMVC.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId
-                                        FROM Student s";
+                    cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId, c.CohortName as CohortName
+                                        FROM Student s
+                                         INNER JOIN Cohort c on c.id = s.cohortid";
                     SqlDataReader reader = cmd.ExecuteReader();
-
-                    List<Student> students = new List<Student>();
+                    var students = new List<Student>();
                     while (reader.Read())
                     {
-                        Student student = new Student
+                        students.Add(
+                        new Student
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
                             SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
-                            CohortId = reader.GetInt32(reader.GetOrdinal("CohortId"))
-                        };
-
-                        students.Add(student);
+                            CohortId = reader.GetInt32(reader.GetOrdinal("CohortId")),
+                            Cohort = new Cohort()
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("CohortId")),
+                                CohortName = reader.GetString(reader.GetOrdinal("CohortName")),
+                            }
+                        });
                     }
                     reader.Close();
-
                     return View(students);
                 }
 
@@ -66,60 +69,44 @@ namespace StudentExercisesMVC.Controllers
         // GET: Students/Details/5
         public ActionResult Details(int id)
         {
-            using (SqlConnection conn = Connection)
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId
-                                        FROM Student s
-                                        WHERE Id = @Id";
-                   
-                    cmd.Parameters.Add(new SqlParameter("@Id", id));
-                    SqlDataReader reader = cmd.ExecuteReader();
-
-                    Student student = null;
-
-                    if (reader.Read())
-                    {
-                        student = new Student
-                        {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                            SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
-                            CohortId = reader.GetInt32(reader.GetOrdinal("CohortId"))
-                        };
-
-                    }
-                    reader.Close();
-
-                    return View(student);
-                }
-            }
+            var student = GetById(id);
+            return View(student);
         }
 
         // GET: Students/Create
         [HttpGet]
         public ActionResult Create()
         {
-            var viewModel = new StudentCreateViewModel();
-            var cohorts = GetAllCohorts();
-            var selectItems = cohorts
-                .Select(cohort => new SelectListItem
-                {
-                    Text = cohort.CohortName,
-                    Value = cohort.Id.ToString()
-                })
-                .ToList();
-
-            selectItems.Insert(0, new SelectListItem
+            using (SqlConnection conn = Connection)
             {
-                Text = "Choose cohort...",
-                Value = "0"
-            });
-            viewModel.Cohorts = selectItems;
-            return View(viewModel);
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT Id, CohortName FROM Cohort";
+                    var reader = cmd.ExecuteReader();
+
+                    var cohorts = new List<Cohort>();
+                    while (reader.Read())
+                    {
+                        cohorts.Add(
+                                new Cohort()
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                    CohortName = reader.GetString(reader.GetOrdinal("CohortName")),
+                                }
+                            );
+                    }
+
+                    reader.Close();
+
+                    var viewModel = new StudentCreateViewModel()
+                    {
+                        Cohorts = cohorts
+                    };
+
+                    return View(viewModel);
+                }
+            }
         }
 
         // POST: Students/Create
@@ -151,8 +138,15 @@ namespace StudentExercisesMVC.Controllers
         public ActionResult Edit(int id)
         {
             var student = GetById(id);
+            var cohorts = GetAllCohorts();
 
-            return View(student);
+            var viewModel = new StudentEditViewModel()
+            {
+                Student = student,
+                Cohorts = cohorts
+            };
+
+            return View(viewModel);
         }
 
         // POST: Students/Edit/5
@@ -219,17 +213,31 @@ namespace StudentExercisesMVC.Controllers
         // GET: Students/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            var student = GetById(id);
+            return View(student);
         }
 
         // POST: Students/Delete/5
         [HttpPost]
+        [ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult DeleteConfirmed(int id)
         {
             try
             {
-                // TODO: Add delete logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"
+                            DELETE FROM StudentExercise WHERE StudentId = @id;
+                            DELETE FROM Student WHERE id = @id;";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
 
                 return RedirectToAction(nameof(Index));
             }
@@ -279,7 +287,6 @@ namespace StudentExercisesMVC.Controllers
             }
         }
 
-
         private Student GetById(int id)
         {
             using (SqlConnection conn = Connection)
@@ -287,8 +294,10 @@ namespace StudentExercisesMVC.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId 
+                    cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId,
+                                        c.CohortName as CohortName
                                         FROM Student s 
+                                        INNER JOIN Cohort c on c.id = s.CohortId 
                                         WHERE s.id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
@@ -302,7 +311,12 @@ namespace StudentExercisesMVC.Controllers
                             FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
                             SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
-                            CohortId = reader.GetInt32(reader.GetOrdinal("CohortId"))
+                            CohortId = reader.GetInt32(reader.GetOrdinal("CohortId")),
+                            Cohort = new Cohort()
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("CohortId")),
+                                CohortName = reader.GetString(reader.GetOrdinal("CohortName")),
+                            }
                         };
 
                     }

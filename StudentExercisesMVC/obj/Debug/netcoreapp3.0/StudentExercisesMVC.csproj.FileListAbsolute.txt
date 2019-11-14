@@ -128,3 +128,4 @@ C:\Users\marla\workspace\cSharp\BookWork\StudentExercisesMVC\StudentExercisesMVC
 C:\Users\marla\workspace\cSharp\BookWork\StudentExercisesMVC\StudentExercisesMVC\obj\Debug\netcoreapp3.0\StudentExercisesMVC.csproj.CopyComplete
 C:\Users\marla\workspace\cSharp\BookWork\StudentExercisesMVC\StudentExercisesMVC\obj\Debug\netcoreapp3.0\StudentExercisesMVC.dll
 C:\Users\marla\workspace\cSharp\BookWork\StudentExercisesMVC\StudentExercisesMVC\obj\Debug\netcoreapp3.0\StudentExercisesMVC.pdb
+C:\Users\marla\workspace\cSharp\BookWork\StudentExercisesMVC\StudentExercisesMVC\obj\Debug\netcoreapp3.0\StudentExercisesMVC.csprojAssemblyReference.cache

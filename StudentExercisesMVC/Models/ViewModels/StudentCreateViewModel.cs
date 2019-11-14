@@ -9,7 +9,18 @@ namespace StudentExercises.Models.ViewModels
 {
     public class StudentCreateViewModel
     {
-        public List<SelectListItem> Cohorts { get; set; }
         public Student Student { get; set; }
+        public List<Cohort> Cohorts { get; set; } = new List<Cohort>();
+        public List<SelectListItem> CohortOptions
+        {
+            get
+            {
+                if (Cohorts == null) return null;
+
+                return Cohorts
+                    .Select(c => new SelectListItem(c.CohortName, c.Id.ToString()))
+                    .ToList();
+            }
+        }
     }
 }
