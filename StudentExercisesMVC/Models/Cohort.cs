@@ -9,10 +9,13 @@ namespace StudentExercises.Models
         public int Id { get; set; }
 
         [Required]
-        [StringLength(12, MinimumLength = 6)]
+        [StringLength(20, MinimumLength = 6)]
+        [Display(Name = "Cohort Name")]
         public string CohortName { get; set; }
 
-        public List<Student> student = new List<Student>();
+        public Student student { get; set; }
+
+        public List<Student> studentList = new List<Student>();
         public List<Instructor> instructor = new List<Instructor>();
 
 
